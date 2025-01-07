@@ -1,3 +1,4 @@
 func main() {
+    tempVar = 10;
     @log "Hello, World!";
 }
