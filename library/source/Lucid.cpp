@@ -39,10 +39,75 @@ void Lucid_Script::Tokenize() {
         buffer += key;
     }
 
-    std::cout << buffer << std::endl;
     buffer.clear();
 }
 
+// TODO: "Compile" the entire file. Main function is necessary
+void Lucid_Script::Execute(const std::string &funcName) {
+    // Find the function to execute first
+    size_t i = 0;
+    for (i = 0; i < m_tokens.size(); i++) {
+        if (m_tokens[i++].type == Lucid_TokenType::FUNCTION_KEYWORD) {
+            if (m_tokens[i].value == funcName) break;
+        }
+    }
+
+    // To exit the parenthesis + first bracket (hard-coded ik)
+    i += 3;
+
+    for(i; i < m_tokens.size(); i++) {
+        switch (m_tokens[i].type) {
+            case Lucid_TokenType::VARIABLE: {
+                bool variableFound = false;
+                size_t variableIndex;
+
+                for (variableIndex = 0; variableIndex < m_variables.size(); variableIndex++) {
+                    if (m_variables[variableIndex].name == m_tokens[i].value) {
+                        variableFound = true;
+                        break;
+                    }
+                }
+
+                Lucid_Variable temp;
+                temp.name = m_tokens[i].value;
+
+                // Go to equal and check if correct
+                if (m_tokens[++i].type != Lucid_TokenType::EQUAL) {
+                    LucidError(0, m_tokens[i-1].value);
+                    return;
+                }
+
+                // Go to the data given to the variable
+                temp.value = m_tokens[++i].value;
+
+                if (variableFound)
+                    m_variables[variableIndex] = temp;
+                else
+                    m_variables.push_back(temp);
+                
+                break;
+            }
+            case Lucid_TokenType::MACRO: {
+                if (m_tokens[++i].value == "log") {
+                    std::string input;
+                    
+                    if (m_tokens[++i].type == Lucid_TokenType::QUOTATION_OPEN) {
+                        input = m_tokens[++i].value;
+                        i++; // Exit quotation
+                        LucidPrint(input);
+                    }
+                }
+
+                break;
+            }
+
+            default: break;
+        }
+    }
+}
+
+
+/*     PRIVATE     */
 bool Lucid_Script::CharScan(const char &key) {
     // If quotation is true, ignore all keys, but if it's a quotation again (when true), turn it to false
     return (!m_stringQuotation || (m_stringQuotation && key == '"'));
@@ -111,6 +176,21 @@ void Lucid_Script::NewCharToken(const char &key) {
     }
 
     m_tokens.push_back(temp);
+}
+
+void Lucid_Script::LucidPrint(const std::string &input) {
+    std::cout << input << std::endl;
+}
+
+void Lucid_Script::LucidError(const uint32_t &id, const std::string &arg) {
+    switch (id) {
+        case 0: {
+            std::cout << "Expected an equal sign after initializing/calling a variable!" << std::endl;
+            std::cout << arg << " = ..." << std::endl;
+            break;
+        }
+        default: std::cout << "Unrecognizable error occured!" << std::endl;
+    }
 }
 
 // Remove later!!!

@@ -25,6 +25,12 @@ enum class Lucid_TokenType {
     ERROR
 };
 
+// Maybe Lucid_Int, Lucid_Bool, Lucid_Float, Lucid_Double, Lucid_String in the future...?
+struct Lucid_Variable {
+    std::string name;
+    std::string value;
+};
+
 struct Lucid_Token {
     Lucid_TokenType type;
     std::string value;
