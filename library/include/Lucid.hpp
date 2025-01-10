@@ -7,10 +7,11 @@ class Lucid_Script {
         void Tokenize();
         void Execute(const std::string &funcName);
         void _TestTokens();
+        void _TestVariables();
 
     private:
         std::vector<Lucid_Token> m_tokens;
-        std::vector<Lucid_Variable> m_variables;
+        std::unordered_map<std::string, Lucid_DataType*> m_variables;
         std::string m_contents;
         bool m_stringQuotation;
 
@@ -21,4 +22,22 @@ class Lucid_Script {
         void LucidPrint(const std::string &input);
         void LucidError(const uint32_t &id, const std::string &arg);
         void LucidLog(const std::string &log);
+};
+
+struct Lucid_VariableFunctors {
+    void operator()(const int &value) {
+        std::cout << value << " (int)";
+    }
+
+    void operator()(const float &value) {
+        std::cout << value << " (float)";
+    }
+
+    void operator()(const double &value) {
+        std::cout << value << " (double)";
+    }
+
+    void operator()(const std::string &value) {
+        std::cout << value << " (string)";
+    }
 };

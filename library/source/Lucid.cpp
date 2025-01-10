@@ -1,6 +1,7 @@
 #include <Lucid.hpp>
 
 #define SET_TO_OPPOSITE_BOOL(var) (var) ? false : true
+#define LUCID_GetTypeFromString_TRY_WRAPPED(code) try { code } catch(const std::invalid_argument&) { } catch(const std::out_of_range&) { }
 
 Lucid_Script::Lucid_Script(const char *file)
     : m_stringQuotation(false) {
@@ -51,18 +52,18 @@ void Lucid_Script::Execute(const std::string &funcName) {
     for(size_t i = 0; i < m_tokens.size(); i++) {
         switch (m_tokens[i].type) {
             case Lucid_TokenType::VARIABLE: {
-                bool variableFound = false;
                 size_t variableIndex;
+                Lucid_DataType *variable;
 
-                for (variableIndex = 0; variableIndex < m_variables.size(); variableIndex++) {
-                    if (m_variables[variableIndex].name == m_tokens[i].value) {
-                        variableFound = true;
-                        break;
-                    }
+                if (m_variables.find(m_tokens[i].value) == m_variables.end()) {
+                    variable = new Lucid_DataType;
+                    m_variables[m_tokens[i].value] = variable;
+                }
+                else {
+                    variable = m_variables[m_tokens[i].value];
                 }
 
-                Lucid_Variable temp;
-                temp.name = m_tokens[i].value;
+                variable = m_variables[m_tokens[i].value];
 
                 // Go to equal and check if correct
                 if (m_tokens[++i].type != Lucid_TokenType::EQUAL) {
@@ -71,24 +72,15 @@ void Lucid_Script::Execute(const std::string &funcName) {
                 }
 
                 // Go to the data given to the variable
-                temp.value = m_tokens[++i].value;
+                *variable = GetTypeFromString(m_tokens[++i].value);
+                std::cout << std::holds_alternative<std::string>(*variable) << std::endl;
 
-                if (variableFound)
-                    m_variables[variableIndex] = temp;
-                else
-                    m_variables.push_back(temp);
-                
                 break;
             }
             case Lucid_TokenType::MACRO: {
                 if (m_tokens[++i].value == "log") {
                     std::string input;
-                    
-                    if (m_tokens[++i].type == Lucid_TokenType::QUOTATION_OPEN) {
-                        input = m_tokens[++i].value;
-                        i++; // Exit quotation
-                        LucidPrint(input);
-                    }
+                    LucidPrint(m_tokens[++i].value);
                 }
 
                 break;
@@ -106,24 +98,33 @@ bool Lucid_Script::CharScan(const char &key) {
     return (!m_stringQuotation || (m_stringQuotation && key == '"'));
 }
 
-Lucid_DataType GetTypeFromString(const std::string &name) {
+Lucid_DataType Lucid_Script::GetTypeFromString(const std::string &name) {
+    if (isalpha(name.front()))
+        return name;
+
     size_t pos;
 
-    int intValue = std::stoi(name.c_str(), &pos);
-    if (pos == name.size()) {
-        return intValue;
-    }
+    LUCID_GetTypeFromString_TRY_WRAPPED(
+        int intValue = std::stoi(name.c_str(), &pos);
+        if (pos == name.size()) {
+            return intValue;
+        } 
+    )
 
-    if (name.back() == 'f') {
-        float floatValue = std::stof(name.c_str(), &pos);
-        if (pos == name.size()-1)
-            return floatValue;
-    }
+    LUCID_GetTypeFromString_TRY_WRAPPED(
+        if (name.back() == 'f') {
+            float floatValue = std::stof(name.c_str(), &pos);
+            if (pos == name.size()-1)
+                return floatValue;
+        }
+    )
 
-    double doubleValue = std::stod(name.c_str(), &pos);
-    if (pos == name.size())
-        return doubleValue;
-
+    LUCID_GetTypeFromString_TRY_WRAPPED(
+        double doubleValue = std::stod(name.c_str(), &pos);
+        if (pos == name.size())
+            return doubleValue;
+    )
+    
     return name;
 }
 
@@ -134,7 +135,7 @@ void Lucid_Script::NewToken(const std::string &name) {
         temp.type = Lucid_TokenType::FUNCTION_KEYWORD;
     }
     else if (m_stringQuotation) {
-        temp.type = Lucid_TokenType::STRING;
+        temp.type = Lucid_TokenType::DATA_TYPE;
         temp.value = name;
     }
     else {
@@ -145,14 +146,14 @@ void Lucid_Script::NewToken(const std::string &name) {
             case Lucid_TokenType::MACRO:
                 temp.type = Lucid_TokenType::FUNCTION_NAME; break;
             case Lucid_TokenType::EQUAL:
-                temp.type = Lucid_TokenType::NUMBER; break;
+                temp.type = Lucid_TokenType::DATA_TYPE; break;
             default:
                 temp.type = Lucid_TokenType::VARIABLE;
         }
         temp.value = name;
     }
 
-    m_tokens.push_back(temp);
+    m_tokens.emplace_back(temp);
 }
 
 void Lucid_Script::NewCharToken(const char &key) {
@@ -177,20 +178,13 @@ void Lucid_Script::NewCharToken(const char &key) {
             temp.type = Lucid_TokenType::COMMA; break;
         case ';':
             temp.type = Lucid_TokenType::SEMICOLON; break;
-        case '"': {
-            if (m_stringQuotation)
-                temp.type = Lucid_TokenType::QUOTATION_CLOSE;
-            else
-                temp.type = Lucid_TokenType::QUOTATION_OPEN;
-            
-            m_stringQuotation = SET_TO_OPPOSITE_BOOL(m_stringQuotation);
-            break;
-        }
+        case '"': m_stringQuotation = SET_TO_OPPOSITE_BOOL(m_stringQuotation); break;
         default:
             temp.type = Lucid_TokenType::ERROR;
     }
 
-    m_tokens.push_back(temp);
+    if (key != '"')
+        m_tokens.emplace_back(temp);
 }
 
 void Lucid_Script::LucidPrint(const std::string &input) {
@@ -222,8 +216,8 @@ void Lucid_Script::_TestTokens() {
                 std::cout << "FUNCTION_NAME: \"" << token.value << "\"" << std::endl; break;
             case Lucid_TokenType::VARIABLE:
                 std::cout << "VARIABLE: \"" << token.value << "\"" << std::endl; break;
-            case Lucid_TokenType::NUMBER:
-                std::cout << "NUMBER: \"" << token.value << "\"" << std::endl; break;
+            case Lucid_TokenType::DATA_TYPE:
+                std::cout << "DATA_TYPE: \"" << token.value << "\"" << std::endl; break;
             case Lucid_TokenType::PARENTHESES_OPEN:
                 std::cout << "PARENTHESES_OPEN" << std::endl; break;
             case Lucid_TokenType::PARENTHESES_CLOSE:
@@ -234,12 +228,6 @@ void Lucid_Script::_TestTokens() {
                 std::cout << "BRACKETS_CLOSE" << std::endl; break;
             case Lucid_TokenType::MACRO:
                 std::cout << "MACRO" << std::endl; break;
-            case Lucid_TokenType::QUOTATION_OPEN:
-                std::cout << "QUOTATION_OPEN" << std::endl; break;
-            case Lucid_TokenType::QUOTATION_CLOSE:
-                std::cout << "QUOTATION_CLOSE" << std::endl; break;
-            case Lucid_TokenType::STRING:
-                std::cout << "STRING: \"" << token.value << "\"" << std::endl; break;
             case Lucid_TokenType::SEMICOLON:
                 std::cout << "SEMICOLON" << std::endl; break;
             case Lucid_TokenType::EQUAL:
@@ -253,5 +241,14 @@ void Lucid_Script::_TestTokens() {
             default:
                 std::cout << "UNKNOWN TOKEN" << std::endl;
         }
+    }
+}
+
+void Lucid_Script::_TestVariables() {
+    for (auto it = m_variables.begin(); it != m_variables.end(); it++) {
+        std::cout << it->second << "\t";
+        std::cout << it->first << ":\t\t";
+        std::visit(Lucid_VariableFunctors{}, *(it->second));
+        std::cout << std::endl;
     }
 }
