@@ -31,6 +31,8 @@ struct Lucid_Variable {
     std::string value;
 };
 
+using Lucid_DataType = std::variant<int, float, double, std::string>;
+
 struct Lucid_Token {
     Lucid_TokenType type;
     std::string value;

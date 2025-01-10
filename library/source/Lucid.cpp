@@ -106,6 +106,27 @@ bool Lucid_Script::CharScan(const char &key) {
     return (!m_stringQuotation || (m_stringQuotation && key == '"'));
 }
 
+Lucid_DataType GetTypeFromString(const std::string &name) {
+    size_t pos;
+
+    int intValue = std::stoi(name.c_str(), &pos);
+    if (pos == name.size()) {
+        return intValue;
+    }
+
+    if (name.back() == 'f') {
+        float floatValue = std::stof(name.c_str(), &pos);
+        if (pos == name.size()-1)
+            return floatValue;
+    }
+
+    double doubleValue = std::stod(name.c_str(), &pos);
+    if (pos == name.size())
+        return doubleValue;
+
+    return name;
+}
+
 void Lucid_Script::NewToken(const std::string &name) {
     Lucid_Token temp;
 

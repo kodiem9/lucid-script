@@ -14,9 +14,10 @@ class Lucid_Script {
         std::string m_contents;
         bool m_stringQuotation;
 
+        bool CharScan(const char &key);
+        Lucid_DataType GetTypeFromString(const std::string &name);
         void NewToken(const std::string &name);
         void NewCharToken(const char &key);
-        bool CharScan(const char &key);
         void LucidPrint(const std::string &input);
         void LucidError(const uint32_t &id, const std::string &arg);
         void LucidLog(const std::string &log);
