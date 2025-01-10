@@ -73,7 +73,6 @@ void Lucid_Script::Execute(const std::string &funcName) {
 
                 // Go to the data given to the variable
                 *variable = GetTypeFromString(m_tokens[++i].value);
-                std::cout << std::holds_alternative<std::string>(*variable) << std::endl;
 
                 break;
             }
@@ -104,6 +103,8 @@ Lucid_DataType Lucid_Script::GetTypeFromString(const std::string &name) {
 
     size_t pos;
 
+    // I have to make the try and catch method because it still
+    // checks if the string is an int, float and double.
     LUCID_GetTypeFromString_TRY_WRAPPED(
         int intValue = std::stoi(name.c_str(), &pos);
         if (pos == name.size()) {
