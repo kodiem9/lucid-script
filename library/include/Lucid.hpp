@@ -19,4 +19,5 @@ class Lucid_Script {
         bool CharScan(const char &key);
         void LucidPrint(const std::string &input);
         void LucidError(const uint32_t &id, const std::string &arg);
+        void LucidLog(const std::string &log);
 };

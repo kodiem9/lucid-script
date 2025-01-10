@@ -27,12 +27,17 @@ void Lucid_Script::Tokenize() {
             }
 
             if (ispunct(key)) {
-                if (buffer.length() > 0) {
-                    NewToken(buffer);
-                    buffer.clear();
+                if (key == '.' && buffer.size() > 0 && isdigit(buffer[0])) {
+                    // Do nothing...
                 }
-                NewCharToken(key);
-                continue;
+                else {
+                    if (buffer.length() > 0) {
+                        NewToken(buffer);
+                        buffer.clear();
+                    }
+                    NewCharToken(key);
+                    continue;
+                }
             }
         }
 
@@ -42,20 +47,8 @@ void Lucid_Script::Tokenize() {
     buffer.clear();
 }
 
-// TODO: "Compile" the entire file. Main function is necessary
 void Lucid_Script::Execute(const std::string &funcName) {
-    // Find the function to execute first
-    size_t i = 0;
-    for (i = 0; i < m_tokens.size(); i++) {
-        if (m_tokens[i++].type == Lucid_TokenType::FUNCTION_KEYWORD) {
-            if (m_tokens[i].value == funcName) break;
-        }
-    }
-
-    // To exit the parenthesis + first bracket (hard-coded ik)
-    i += 3;
-
-    for(i; i < m_tokens.size(); i++) {
+    for(size_t i = 0; i < m_tokens.size(); i++) {
         switch (m_tokens[i].type) {
             case Lucid_TokenType::VARIABLE: {
                 bool variableFound = false;
@@ -124,6 +117,7 @@ void Lucid_Script::NewToken(const std::string &name) {
         temp.value = name;
     }
     else {
+        // Check the prevous token. If no tokens were made the program will break!
         switch (m_tokens[m_tokens.size()-1].type) {
             case Lucid_TokenType::FUNCTION_KEYWORD:
                 temp.type = Lucid_TokenType::FUNCTION_NAME; break;
@@ -191,6 +185,10 @@ void Lucid_Script::LucidError(const uint32_t &id, const std::string &arg) {
         }
         default: std::cout << "Unrecognizable error occured!" << std::endl;
     }
+}
+
+void Lucid_Script::LucidLog(const std::string &log) {
+    std::cout << "[LUCID] " << log << std::endl;
 }
 
 // Remove later!!!

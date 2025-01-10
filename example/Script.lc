@@ -1,4 +1,4 @@
-func main() {
-    tempVar = 10;
-    @log "Hello, World!";
-}
+{}
+
+tempVar = 10.5f;
+@log "Hello, World!";
