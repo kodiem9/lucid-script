@@ -72,11 +72,13 @@ void Lucid_Script::Execute(const std::string &funcName) {
 
                 // Go to the data given to the variable
                 if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
-                    std::shared_ptr<Lucid_DataType> getVariable;
-
                     if (m_variables.find(m_tokens[i].value) != m_variables.end()) {
-                        getVariable = m_variables[m_tokens[i].value];
-                        *variable = *getVariable;
+                        Lucid_DataType &getVariable =  *m_variables[m_tokens[i].value];
+                        *variable = getVariable;
+                    }
+                    else {
+                        LucidError(2, "");
+                        return;
                     }
                 }
                 else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
@@ -84,6 +86,7 @@ void Lucid_Script::Execute(const std::string &funcName) {
                 }
                 else {
                     LucidError(1, "");
+                    return;
                 }
 
                 break;
