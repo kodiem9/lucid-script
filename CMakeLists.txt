@@ -25,16 +25,16 @@ else()
     set(USE_PCH ON)
 endif()
 
-set(LIB_PCH_PATH "${CMAKE_SOURCE_DIR}/library/common")
-set(LIB_PCH_HEADER "${LIB_PCH_PATH}/LIB_PCH.hpp")
 set(SOURCE_PATH "${CMAKE_SOURCE_DIR}/example")
-set(LIBRARY_PATH "${CMAKE_SOURCE_DIR}/library")
+set(LIBRARY_PATH "${CMAKE_SOURCE_DIR}/lucid")
+set(LIB_PCH_PATH "${LIBRARY_PATH}/common")
+set(LIB_PCH_HEADER "${LIB_PCH_PATH}/LIB_PCH.hpp")
 
 include_directories("${LIB_PCH_PATH}")
 
 file(GLOB_RECURSE SOURCE_FILES "${SOURCE_PATH}/*.cpp")
 
-add_library(lucidscript STATIC library/source/Lucid.cpp)
+add_library(lucidscript STATIC "${LIBRARY_PATH}/source/Lucid.cpp")
 target_include_directories(lucidscript PUBLIC "${LIBRARY_PATH}/include")
 target_compile_options(lucidscript PRIVATE -Werror -Wextra)
 
