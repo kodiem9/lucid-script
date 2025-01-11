@@ -1,7 +1,5 @@
 {}
 
-tempVar = 10.2f;
-secondVar = 10;
-myVar = 10.8
-lastVar = "Hello"
+var1 = 20;
+var2 = var1;
 @log "Hello, World!";

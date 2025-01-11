@@ -71,7 +71,20 @@ void Lucid_Script::Execute(const std::string &funcName) {
                 }
 
                 // Go to the data given to the variable
-                *variable = GetTypeFromString(m_tokens[++i].value);
+                if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
+                    std::shared_ptr<Lucid_DataType> getVariable;
+
+                    if (m_variables.find(m_tokens[i].value) != m_variables.end()) {
+                        getVariable = m_variables[m_tokens[i].value];
+                        *variable = *getVariable;
+                    }
+                }
+                else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
+                    *variable = GetTypeFromString(m_tokens[i].value);
+                }
+                else {
+                    LucidError(1, "");
+                }
 
                 break;
             }
@@ -146,13 +159,20 @@ void Lucid_Script::NewToken(const std::string &name) {
     }
     else {
         // Check the prevous token. If no tokens were made the program will break!
-        switch (m_tokens[m_tokens.size()-1].type) {
+        const Lucid_Token &prevToken = m_tokens[m_tokens.size()-1];
+
+        switch (prevToken.type) {
             case Lucid_TokenType::FUNCTION_KEYWORD:
                 temp.type = Lucid_TokenType::FUNCTION_NAME; break;
             case Lucid_TokenType::MACRO:
                 temp.type = Lucid_TokenType::FUNCTION_NAME; break;
-            case Lucid_TokenType::EQUAL:
-                temp.type = Lucid_TokenType::DATA_TYPE; break;
+            case Lucid_TokenType::EQUAL: {
+                if (isalpha(name[0]))
+                    temp.type = Lucid_TokenType::VARIABLE;
+                else
+                    temp.type = Lucid_TokenType::DATA_TYPE;
+                break;
+            }
             default:
                 temp.type = Lucid_TokenType::VARIABLE;
         }
@@ -198,6 +218,7 @@ void Lucid_Script::LucidPrint(const std::string &input) {
 }
 
 void Lucid_Script::LucidError(const uint32_t &id, const std::string &arg) {
+    std::cout << "[ERROR #" << id << "]\t";
     switch (id) {
         case 0: {
             std::cout << "Expected an equal sign after initializing/calling a variable!" << std::endl;
@@ -214,7 +235,10 @@ void Lucid_Script::LucidLog(const std::string &log) {
 
 // Remove later!!!
 void Lucid_Script::_TestTokens() {
+    size_t index = 0;
+
     for (const Lucid_Token &token: m_tokens) {
+        std::cout << index << "\t";
         switch (token.type) {
             case Lucid_TokenType::FUNCTION_KEYWORD:
                 std::cout << "FUNCTION_KEYWORD" << std::endl; break;
@@ -247,6 +271,7 @@ void Lucid_Script::_TestTokens() {
             default:
                 std::cout << "UNKNOWN TOKEN" << std::endl;
         }
+        index++;
     }
 }
 
