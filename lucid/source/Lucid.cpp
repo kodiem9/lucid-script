@@ -1,7 +1,6 @@
 #include <Lucid.hpp>
 
 #define SET_TO_OPPOSITE_BOOL(var) (var) ? false : true
-#define LUCID_GetTypeFromString_TRY_WRAPPED(code) try { code } catch(const std::invalid_argument&) { } catch(const std::out_of_range&) { }
 
 Lucid_Script::Lucid_Script(const char *file)
     : m_stringQuotation(false) {
@@ -49,14 +48,14 @@ void Lucid_Script::Tokenize() {
 }
 
 void Lucid_Script::Execute(const std::string &funcName) {
-    for(size_t i = 0; i < m_tokens.size(); i++) {
+    for (size_t i = 0; i < m_tokens.size(); i++) {
         switch (m_tokens[i].type) {
             case Lucid_TokenType::VARIABLE: {
                 size_t variableIndex;
-                Lucid_DataType *variable;
+                std::shared_ptr<Lucid_DataType> variable;
 
                 if (m_variables.find(m_tokens[i].value) == m_variables.end()) {
-                    variable = new Lucid_DataType;
+                    variable = std::make_shared<Lucid_DataType>();
                     m_variables[m_tokens[i].value] = variable;
                 }
                 else {
@@ -105,26 +104,32 @@ Lucid_DataType Lucid_Script::GetTypeFromString(const std::string &name) {
 
     // I have to make the try and catch method because it still
     // checks if the string is an int, float and double.
-    LUCID_GetTypeFromString_TRY_WRAPPED(
+    try {
         int intValue = std::stoi(name.c_str(), &pos);
         if (pos == name.size()) {
             return intValue;
         } 
-    )
+    }
+    catch (const std::invalid_argument&) { }
+    catch (const std::out_of_range&) { }
 
-    LUCID_GetTypeFromString_TRY_WRAPPED(
+    try {
         if (name.back() == 'f') {
             float floatValue = std::stof(name.c_str(), &pos);
             if (pos == name.size()-1)
                 return floatValue;
         }
-    )
+    }
+    catch (const std::invalid_argument&) { }
+    catch (const std::out_of_range&) { }
 
-    LUCID_GetTypeFromString_TRY_WRAPPED(
+    try {
         double doubleValue = std::stod(name.c_str(), &pos);
         if (pos == name.size())
             return doubleValue;
-    )
+    }
+    catch (const std::invalid_argument&) { }
+    catch (const std::out_of_range&) { }
     
     return name;
 }
@@ -253,3 +258,10 @@ void Lucid_Script::_TestVariables() {
         std::cout << std::endl;
     }
 }
+
+
+/*     LUCID DATA     */
+void Lucid_VariableFunctors::operator()(const int &value) { std::cout << value << " (int)"; }
+void Lucid_VariableFunctors::operator()(const float &value) { std::cout << value << " (float)"; }
+void Lucid_VariableFunctors::operator()(const double &value) { std::cout << value << " (double)"; }
+void Lucid_VariableFunctors::operator()(const std::string &value) { std::cout << value << " (string)"; }

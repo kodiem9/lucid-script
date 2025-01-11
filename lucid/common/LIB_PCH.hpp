@@ -6,3 +6,4 @@
 #include <vector>
 #include <variant>
 #include <unordered_map>
+#include <memory>
