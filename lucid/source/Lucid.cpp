@@ -44,7 +44,10 @@ void Lucid_Script::Tokenize() {
         buffer += key;
     }
 
-    buffer.clear();
+    if (buffer.length() > 0)
+        NewToken(buffer);
+    else
+        NewCharToken(key);
 }
 
 void Lucid_Script::Execute(const std::string &funcName) {
@@ -93,8 +96,17 @@ void Lucid_Script::Execute(const std::string &funcName) {
             }
             case Lucid_TokenType::MACRO: {
                 if (m_tokens[++i].value == "log") {
-                    std::string input;
-                    LucidPrint(m_tokens[++i].value);
+                    if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
+                        Lucid_DataType &variable = *m_variables[m_tokens[i].value];
+                        LucidPrint(variable);
+                    }
+                    else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
+                        LucidPrint(m_tokens[i].value);
+                    }
+                    else {
+                        LucidError(3, "");
+                        return;
+                    }
                 }
 
                 break;
@@ -216,8 +228,10 @@ void Lucid_Script::NewCharToken(const char &key) {
         m_tokens.emplace_back(temp);
 }
 
-void Lucid_Script::LucidPrint(const std::string &input) {
-    std::cout << input << std::endl;
+void Lucid_Script::LucidPrint(const Lucid_DataType &input) {
+    std::visit([](const auto &i){
+        std::cout << i << std::endl;
+    }, input);
 }
 
 void Lucid_Script::LucidError(const uint32_t &id, const std::string &arg) {

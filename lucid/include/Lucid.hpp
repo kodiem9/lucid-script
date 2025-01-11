@@ -19,7 +19,7 @@ class Lucid_Script {
         Lucid_DataType GetTypeFromString(const std::string &name);
         void NewToken(const std::string &name);
         void NewCharToken(const char &key);
-        void LucidPrint(const std::string &input);
+        void LucidPrint(const Lucid_DataType &input);
         void LucidError(const uint32_t &id, const std::string &arg);
         void LucidLog(const std::string &log);
 };
