@@ -55,17 +55,7 @@ void Lucid_Script::Execute(const std::string &funcName) {
         switch (m_tokens[i].type) {
             case Lucid_TokenType::VARIABLE: {
                 size_t variableIndex;
-                std::shared_ptr<Lucid_DataType> variable;
-
-                if (m_variables.find(m_tokens[i].value) == m_variables.end()) {
-                    variable = std::make_shared<Lucid_DataType>();
-                    m_variables[m_tokens[i].value] = variable;
-                }
-                else {
-                    variable = m_variables[m_tokens[i].value];
-                }
-
-                variable = m_variables[m_tokens[i].value];
+                Lucid_DataType &variable = m_variables[m_tokens[i].value];
 
                 // Go to equal and check if correct
                 if (m_tokens[++i].type != Lucid_TokenType::EQUAL) {
@@ -76,8 +66,8 @@ void Lucid_Script::Execute(const std::string &funcName) {
                 // Go to the data given to the variable
                 if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
                     if (m_variables.find(m_tokens[i].value) != m_variables.end()) {
-                        Lucid_DataType &getVariable =  *m_variables[m_tokens[i].value];
-                        *variable = getVariable;
+                        Lucid_DataType &getVariable =  m_variables[m_tokens[i].value];
+                        variable = getVariable;
                     }
                     else {
                         LucidError(2, "");
@@ -85,7 +75,7 @@ void Lucid_Script::Execute(const std::string &funcName) {
                     }
                 }
                 else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
-                    *variable = GetTypeFromString(m_tokens[i].value);
+                    variable = GetTypeFromString(m_tokens[i].value);
                 }
                 else {
                     LucidError(1, "");
@@ -97,8 +87,8 @@ void Lucid_Script::Execute(const std::string &funcName) {
             case Lucid_TokenType::MACRO: {
                 if (m_tokens[++i].value == "log") {
                     if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
-                        Lucid_DataType &variable = *m_variables[m_tokens[i].value];
-                        LucidPrint(variable);
+                        Lucid_DataType &printVariable = m_variables[m_tokens[i].value];
+                        LucidPrint(printVariable);
                     }
                     else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
                         LucidPrint(m_tokens[i].value);
@@ -294,9 +284,9 @@ void Lucid_Script::_TestTokens() {
 
 void Lucid_Script::_TestVariables() {
     for (auto it = m_variables.begin(); it != m_variables.end(); it++) {
-        std::cout << it->second << "\t";
+        std::cout << &it->second << "\t";
         std::cout << it->first << ":\t\t";
-        std::visit(Lucid_VariableFunctors{}, *(it->second));
+        std::visit(Lucid_VariableFunctors{}, it->second);
         std::cout << std::endl;
     }
 }

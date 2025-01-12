@@ -22,7 +22,7 @@ enum class Lucid_TokenType {
 };
 
 using Lucid_DataType = std::variant<int, float, double, std::string>;
-using Lucid_VariableUMap = std::unordered_map<std::string, std::shared_ptr<Lucid_DataType>>;
+using Lucid_VariableUMap = std::unordered_map<std::string, Lucid_DataType>;
 
 struct Lucid_Token {
     Lucid_TokenType type;
