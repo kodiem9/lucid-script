@@ -84,6 +84,12 @@ void Lucid_Script::Execute(const std::string &funcName) {
 
                 break;
             }
+
+            // Calling C++ variable
+            case Lucid_TokenType::DOLLAR_SIGN: {
+                
+            }
+
             case Lucid_TokenType::MACRO: {
                 if (m_tokens[++i].value == "log") {
                     if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
@@ -209,7 +215,10 @@ void Lucid_Script::NewCharToken(const char &key) {
             temp.type = Lucid_TokenType::COMMA; break;
         case ';':
             temp.type = Lucid_TokenType::SEMICOLON; break;
-        case '"': m_stringQuotation = SET_TO_OPPOSITE_BOOL(m_stringQuotation); break;
+        case '$':
+            temp.type = Lucid_TokenType::DOLLAR_SIGN; break;
+        case '"':
+            m_stringQuotation = SET_TO_OPPOSITE_BOOL(m_stringQuotation); break;
         default:
             temp.type = Lucid_TokenType::ERROR;
     }
@@ -291,9 +300,22 @@ void Lucid_Script::_TestVariables() {
     }
 }
 
+void Lucid_Script::_TestCppVariables() {
+    for (auto it = m_cppVariables.begin(); it != m_cppVariables.end(); it++) {
+        std::cout << &it->second << "\t";
+        std::cout << it->first << ":\t\t";
+        std::visit(Lucid_VariableFunctors{}, it->second);
+        std::cout << std::endl;
+    }
+}
+
 
 /*     LUCID DATA     */
 void Lucid_VariableFunctors::operator()(const int &value) { std::cout << value << " (int)"; }
 void Lucid_VariableFunctors::operator()(const float &value) { std::cout << value << " (float)"; }
 void Lucid_VariableFunctors::operator()(const double &value) { std::cout << value << " (double)"; }
 void Lucid_VariableFunctors::operator()(const std::string &value) { std::cout << value << " (string)"; }
+void Lucid_VariableFunctors::operator()(const int *value) { std::cout << *value << " (int)"; }
+void Lucid_VariableFunctors::operator()(const float *value) { std::cout << *value << " (float)"; }
+void Lucid_VariableFunctors::operator()(const double *value) { std::cout << *value << " (double)"; }
+void Lucid_VariableFunctors::operator()(const std::string *value) { std::cout << *value << " (string)"; }

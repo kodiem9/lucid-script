@@ -17,12 +17,29 @@ enum class Lucid_TokenType {
     COMMA,
     EQUAL,
     SEMICOLON,
+    DOLLAR_SIGN,
 
     ERROR
 };
 
-using Lucid_DataType = std::variant<int, float, double, std::string>;
-using Lucid_VariableUMap = std::unordered_map<std::string, Lucid_DataType>;
+using Lucid_DataType = std::variant
+    <
+        int,
+        float,
+        double,
+        std::string
+    >;
+
+using Lucid_CppDataType = std::variant
+    <
+        int*,
+        float*,
+        double*,
+        std::string*
+    >;
+
+using Lucid_VariablesMap = std::unordered_map<std::string, Lucid_DataType>;
+using Lucid_CppVariablesMap = std::unordered_map<std::string, Lucid_CppDataType>;
 
 struct Lucid_Token {
     Lucid_TokenType type;
@@ -34,4 +51,8 @@ struct Lucid_VariableFunctors {
     void operator()(const float &value);
     void operator()(const double &value);
     void operator()(const std::string &value);
+    void operator()(const int *value);
+    void operator()(const float *value);
+    void operator()(const double *value);
+    void operator()(const std::string *value);
 };

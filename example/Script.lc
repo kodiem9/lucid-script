@@ -1,5 +1,3 @@
 {}
 
-var1 = 20;
-var2 = var1;
-@log var2;
+$a = 20;
