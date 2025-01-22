@@ -53,36 +53,9 @@ void Lucid_Script::Tokenize() {
 void Lucid_Script::Execute(const std::string &funcName) {
     for (size_t i = 0; i < m_tokens.size(); i++) {
         switch (m_tokens[i].type) {
+            // Callign Lucid variable
             case Lucid_TokenType::VARIABLE: {
-                size_t variableIndex;
-                Lucid_DataType &variable = m_variables[m_tokens[i].value];
 
-                // Go to equal and check if correct
-                if (m_tokens[++i].type != Lucid_TokenType::EQUAL) {
-                    LucidError(0, m_tokens[i-1].value);
-                    return;
-                }
-
-                // Go to the data given to the variable
-                if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
-                    if (m_variables.find(m_tokens[i].value) != m_variables.end()) {
-                        Lucid_DataType &getVariable =  m_variables[m_tokens[i].value];
-                        variable = getVariable;
-                    }
-                    else {
-                        LucidError(2, "");
-                        return;
-                    }
-                }
-                else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
-                    variable = GetTypeFromString(m_tokens[i].value);
-                }
-                else {
-                    LucidError(1, "");
-                    return;
-                }
-
-                break;
             }
 
             // Calling C++ variable
@@ -90,22 +63,9 @@ void Lucid_Script::Execute(const std::string &funcName) {
                 
             }
 
+            // Macro related things (functions, keywords etc.)
             case Lucid_TokenType::MACRO: {
-                if (m_tokens[++i].value == "log") {
-                    if (m_tokens[++i].type == Lucid_TokenType::VARIABLE) {
-                        Lucid_DataType &printVariable = m_variables[m_tokens[i].value];
-                        LucidPrint(printVariable);
-                    }
-                    else if (m_tokens[i].type == Lucid_TokenType::DATA_TYPE) {
-                        LucidPrint(m_tokens[i].value);
-                    }
-                    else {
-                        LucidError(3, "");
-                        return;
-                    }
-                }
-
-                break;
+            
             }
 
             default: break;
@@ -118,44 +78,6 @@ void Lucid_Script::Execute(const std::string &funcName) {
 bool Lucid_Script::CharScan(const char &key) {
     // If quotation is true, ignore all keys, but if it's a quotation again (when true), turn it to false
     return (!m_stringQuotation || (m_stringQuotation && key == '"'));
-}
-
-Lucid_DataType Lucid_Script::GetTypeFromString(const std::string &name) {
-    if (isalpha(name.front()))
-        return name;
-
-    size_t pos;
-
-    // I have to make the try and catch method because it still
-    // checks if the string is an int, float and double.
-    try {
-        int intValue = std::stoi(name.c_str(), &pos);
-        if (pos == name.size()) {
-            return intValue;
-        } 
-    }
-    catch (const std::invalid_argument&) { }
-    catch (const std::out_of_range&) { }
-
-    try {
-        if (name.back() == 'f') {
-            float floatValue = std::stof(name.c_str(), &pos);
-            if (pos == name.size()-1)
-                return floatValue;
-        }
-    }
-    catch (const std::invalid_argument&) { }
-    catch (const std::out_of_range&) { }
-
-    try {
-        double doubleValue = std::stod(name.c_str(), &pos);
-        if (pos == name.size())
-            return doubleValue;
-    }
-    catch (const std::invalid_argument&) { }
-    catch (const std::out_of_range&) { }
-    
-    return name;
 }
 
 void Lucid_Script::NewToken(const std::string &name) {
@@ -227,12 +149,6 @@ void Lucid_Script::NewCharToken(const char &key) {
         m_tokens.emplace_back(temp);
 }
 
-void Lucid_Script::LucidPrint(const Lucid_DataType &input) {
-    std::visit([](const auto &i){
-        std::cout << i << std::endl;
-    }, input);
-}
-
 void Lucid_Script::LucidError(const uint32_t &id, const std::string &arg) {
     std::cout << "[ERROR #" << id << "]\t";
     switch (id) {
@@ -290,32 +206,3 @@ void Lucid_Script::_TestTokens() {
         index++;
     }
 }
-
-void Lucid_Script::_TestVariables() {
-    for (auto it = m_variables.begin(); it != m_variables.end(); it++) {
-        std::cout << &it->second << "\t";
-        std::cout << it->first << ":\t\t";
-        std::visit(Lucid_VariableFunctors{}, it->second);
-        std::cout << std::endl;
-    }
-}
-
-void Lucid_Script::_TestCppVariables() {
-    for (auto it = m_cppVariables.begin(); it != m_cppVariables.end(); it++) {
-        std::cout << &it->second << "\t";
-        std::cout << it->first << ":\t\t";
-        std::visit(Lucid_VariableFunctors{}, it->second);
-        std::cout << std::endl;
-    }
-}
-
-
-/*     LUCID DATA     */
-void Lucid_VariableFunctors::operator()(const int &value) { std::cout << value << " (int)"; }
-void Lucid_VariableFunctors::operator()(const float &value) { std::cout << value << " (float)"; }
-void Lucid_VariableFunctors::operator()(const double &value) { std::cout << value << " (double)"; }
-void Lucid_VariableFunctors::operator()(const std::string &value) { std::cout << value << " (string)"; }
-void Lucid_VariableFunctors::operator()(const int *value) { std::cout << *value << " (int)"; }
-void Lucid_VariableFunctors::operator()(const float *value) { std::cout << *value << " (float)"; }
-void Lucid_VariableFunctors::operator()(const double *value) { std::cout << *value << " (double)"; }
-void Lucid_VariableFunctors::operator()(const std::string *value) { std::cout << *value << " (string)"; }
